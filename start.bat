@@ -3,7 +3,7 @@ echo Starting Smart Redistribution App...
 
 echo.
 echo [1/2] Starting Flask Backend on http://localhost:5000
-start "Backend" cmd /k "cd /d %~dp0backend && pip install -r requirements.txt && python app.py"
+start "Backend" cmd /k "cd /d %~dp0backend && C:\Users\varad\AppData\Local\Programs\Python\Python313\python.exe app.py"
 
 timeout /t 3 /nobreak >nul
 
