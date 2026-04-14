@@ -1,81 +1,192 @@
 import React, { useState } from "react";
 import { api } from "../api";
+import { useApp } from "../App";
 
 export default function Donate() {
   const [form, setForm] = useState({
     donor_name: "", food_quantity: "", food_type: "Veg",
     latitude: "", longitude: "", expiry_hours: "2"
   });
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
+  const [result, setResult]   = useState(null);
+  const [error, setError]     = useState("");
+  const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const { showToast } = useApp();
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  // UX Principle: GPS auto-detect with loading feedback
   const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      pos => { set("latitude", pos.coords.latitude.toFixed(4)); set("longitude", pos.coords.longitude.toFixed(4)); },
-      () => setError("Location access denied. Enter manually.")
+      pos => {
+        set("latitude",  pos.coords.latitude.toFixed(4));
+        set("longitude", pos.coords.longitude.toFixed(4));
+        setLocating(false);
+        showToast("Location detected successfully!");
+      },
+      () => {
+        setError("Location access denied. Please enter coordinates manually.");
+        setLocating(false);
+      }
     );
   };
 
   const submit = async (e) => {
     e.preventDefault();
-    setError(""); setResult(null);
+    setError(""); setResult(null); setLoading(true);
     const res = await api.post("/donate", {
       ...form,
       food_quantity: Number(form.food_quantity),
-      latitude: Number(form.latitude),
-      longitude: Number(form.longitude),
-      expiry_hours: Number(form.expiry_hours)
+      latitude:      Number(form.latitude),
+      longitude:     Number(form.longitude),
+      expiry_hours:  Number(form.expiry_hours)
     });
-    if (res.error) setError(res.error);
-    else setResult(res);
+    setLoading(false);
+    if (!res || res.error) {
+      setError(res?.error || "Something went wrong. Try again.");
+    } else {
+      setResult(res);
+      showToast("Donation submitted successfully!");
+      // Reset form
+      setForm({ donor_name: "", food_quantity: "", food_type: "Veg", latitude: "", longitude: "", expiry_hours: "2" });
+    }
   };
 
   return (
     <div>
-      <h2>🍛 Donate Food</h2>
-      <div className="card">
-        <form onSubmit={submit}>
-          <div>
-            <label>Donor Name / Event</label>
-            <input required value={form.donor_name} onChange={e => set("donor_name", e.target.value)} placeholder="e.g. Sharma Wedding" />
-          </div>
-          <div>
-            <label>Food Quantity (plates)</label>
-            <input required type="number" min="1" value={form.food_quantity} onChange={e => set("food_quantity", e.target.value)} placeholder="e.g. 50" />
-          </div>
-          <div>
-            <label>Food Type</label>
-            <select value={form.food_type} onChange={e => set("food_type", e.target.value)}>
-              <option>Veg</option>
-              <option>Non-Veg</option>
-              <option>Mixed</option>
-            </select>
-          </div>
-          <div>
-            <label>Use Within (hours)</label>
-            <input type="number" min="1" max="24" value={form.expiry_hours} onChange={e => set("expiry_hours", e.target.value)} />
-          </div>
-          <div>
-            <label>Location</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input required value={form.latitude} onChange={e => set("latitude", e.target.value)} placeholder="Latitude" />
-              <input required value={form.longitude} onChange={e => set("longitude", e.target.value)} placeholder="Longitude" />
-              <button type="button" className="btn btn-secondary" onClick={useMyLocation}>📍 Auto</button>
-            </div>
-          </div>
-          <button type="submit" className="btn btn-primary">Submit Donation</button>
-        </form>
+      <h2 style={{ marginBottom: 6 }}>🍛 Donate Food</h2>
+      {/* UX Principle: Context — explain what this form does */}
+      <p style={{ color: "#718096", fontSize: "0.88rem", marginBottom: 20 }}>
+        Submit surplus food from your event, restaurant, or canteen. Our AI will instantly match it to the nearest NGO in need.
+      </p>
 
-        {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
-        {result && (
-          <div className="success-msg" style={{ marginTop: 12 }}>
-            ✅ Donation submitted! {result.matched_ngo
-              ? `Matched with: ${result.matched_ngo}`
-              : "No NGO matched yet — will be assigned soon."}
+      <div className="row">
+        <div className="col">
+          <div className="card">
+            <form onSubmit={submit}>
+              <div className="form-grid">
+
+                {/* UX Principle: Group related fields together */}
+                <div className="field form-full">
+                  <label>Donor Name / Event</label>
+                  <input
+                    required
+                    value={form.donor_name}
+                    onChange={e => set("donor_name", e.target.value)}
+                    placeholder="e.g. Sharma Wedding, Hotel Taj, School Canteen"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Food Quantity (plates)</label>
+                  <input
+                    required type="number" min="1"
+                    value={form.food_quantity}
+                    onChange={e => set("food_quantity", e.target.value)}
+                    placeholder="e.g. 50"
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Food Type</label>
+                  <select value={form.food_type} onChange={e => set("food_type", e.target.value)}>
+                    <option>Veg</option>
+                    <option>Non-Veg</option>
+                    <option>Mixed</option>
+                  </select>
+                </div>
+
+                <div className="field form-full">
+                  <label>Use Within (hours)</label>
+                  <input
+                    type="number" min="1" max="24"
+                    value={form.expiry_hours}
+                    onChange={e => set("expiry_hours", e.target.value)}
+                  />
+                  <span className="form-hint">Food must be consumed within this time window</span>
+                </div>
+
+                {/* UX Principle: GPS auto-detect reduces friction */}
+                <div className="field form-full">
+                  <label>Your Location</label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      required value={form.latitude}
+                      onChange={e => set("latitude", e.target.value)}
+                      placeholder="Latitude (e.g. 18.5204)"
+                    />
+                    <input
+                      required value={form.longitude}
+                      onChange={e => set("longitude", e.target.value)}
+                      placeholder="Longitude (e.g. 73.8567)"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={useMyLocation}
+                      disabled={locating}
+                      style={{ whiteSpace: "nowrap" }}
+                    >
+                      {locating ? "Detecting..." : "📍 Auto-detect"}
+                    </button>
+                  </div>
+                  <span className="form-hint">Used to find the nearest NGO to your location</span>
+                </div>
+
+                <div className="form-full">
+                  <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: "100%", justifyContent: "center", padding: "11px" }}>
+                    {loading ? "Submitting..." : "🍛 Submit Donation"}
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {error  && <div className="error-msg mt-12">{error}</div>}
+            {result && (
+              <div className="success-msg mt-12">
+                <strong>✅ Donation submitted!</strong><br />
+                {result.matched_ngo
+                  ? <>Matched with: <strong>{result.matched_ngo}</strong> — they will collect the food shortly.</>
+                  : "No NGO matched yet — you will be notified when one is assigned."}
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* UX Principle: Contextual help panel alongside the form */}
+        <div className="col" style={{ maxWidth: 300 }}>
+          <div className="card">
+            <h3 style={{ marginBottom: 14, fontSize: "0.95rem" }}>💡 How it works</h3>
+            {[
+              { step: "1", text: "Fill in your food details and location" },
+              { step: "2", text: "AI finds the nearest NGO with a food deficit" },
+              { step: "3", text: "NGO gets notified and confirms pickup" },
+              { step: "4", text: "Food reaches people in need within minutes" },
+            ].map(s => (
+              <div key={s.step} style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
+                <div style={{
+                  background: "#40916c", color: "white",
+                  borderRadius: "50%", width: 24, height: 24,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.75rem", fontWeight: 700, flexShrink: 0
+                }}>{s.step}</div>
+                <p style={{ fontSize: "0.85rem", color: "#4a5568", lineHeight: 1.5 }}>{s.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="card" style={{ background: "#f0fff4", border: "1px solid #c6f6d5" }}>
+            <p style={{ fontSize: "0.82rem", color: "#276749", lineHeight: 1.6 }}>
+              🌱 Every plate donated prevents food waste and feeds someone in need.
+              Together we can eliminate hunger one meal at a time.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

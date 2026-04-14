@@ -90,6 +90,14 @@ def stats():
         "completed_transfers": len(transfers)
     })
 
+@app.route("/api/history/transfers", methods=["GET"])
+def get_transfers():
+    return jsonify(transfers)
+
+@app.route("/api/history/donations", methods=["GET"])
+def get_donations():
+    return jsonify(donations)
+
 @app.route("/api/seed", methods=["POST"])
 def seed_demo_data():
     demo_ngos = [
