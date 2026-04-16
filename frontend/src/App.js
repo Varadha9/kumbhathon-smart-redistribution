@@ -1,61 +1,96 @@
+// App.js
+// Root component of the React app.
+// Handles: user authentication state, tab navigation, toast notifications,
+// backend connectivity check, and global context shared across all components.
+
 import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
-import Dashboard from "./components/Dashboard";
-import Alerts from "./components/Alerts";
-import Donate from "./components/Donate";
-import NGOMap from "./components/NGOMap";
+import Dashboard  from "./components/Dashboard";
+import Alerts     from "./components/Alerts";
+import Donate     from "./components/Donate";
+import NGOMap     from "./components/NGOMap";
 import RegisterNGO from "./components/RegisterNGO";
-import History from "./components/History";
+import History    from "./components/History";
+import Auth       from "./components/Auth";
 import "./App.css";
 
-// Global context for toast notifications and refresh trigger
+// AppContext — a global state container shared across all child components.
+// Components use useApp() hook to access: showToast, triggerRefresh, refresh, user.
 export const AppContext = createContext();
 
-const TABS = [
-  { id: "Dashboard", icon: "📊" },
-  { id: "Alerts",    icon: "🔔" },
-  { id: "Donate",    icon: "🍛" },
-  { id: "Map",       icon: "🗺️" },
-  { id: "History",   icon: "📋" },
-  { id: "Register",  icon: "🏢" },
+// Tab definitions — each tab has an id, icon, and which roles can see it.
+// This controls role-based access: donors don't see Alerts, NGOs don't see Donate, etc.
+const ALL_TABS = [
+  { id: "Dashboard", icon: "📊", roles: ["ngo", "donor", "admin"] },  // everyone sees dashboard
+  { id: "Alerts",    icon: "🔔", roles: ["ngo", "admin"] },           // only NGOs see alerts
+  { id: "Donate",    icon: "🍛", roles: ["donor", "admin"] },         // only donors see donate
+  { id: "Map",       icon: "🗺️", roles: ["ngo", "donor", "admin"] }, // everyone sees map
+  { id: "History",   icon: "📋", roles: ["ngo", "donor", "admin"] }, // everyone sees history
+  { id: "Register",  icon: "🏢", roles: ["admin"] },                  // only admin sees register
 ];
 
 export default function App() {
-  const [tab, setTab]         = useState("Dashboard");
-  const [toast, setToast]     = useState(null);
-  const [online, setOnline]   = useState(null); // null=checking, true=up, false=down
-  const [refresh, setRefresh] = useState(0);
+  const [tab, setTab]         = useState("Dashboard");  // currently active tab
+  const [toast, setToast]     = useState(null);         // toast notification message
+  const [online, setOnline]   = useState(null);         // backend connectivity status
+  const [refresh, setRefresh] = useState(0);            // increment to trigger data reload in child components
+  const [user, setUser]       = useState(() => {
+    // On page load, restore user from localStorage so they stay logged in after refresh
+    try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
+  });
 
-  // Check backend connectivity on mount
+  // Check if Flask backend is reachable when the app first loads
   useEffect(() => {
     fetch("http://localhost:5000/api/stats")
       .then(() => setOnline(true))
       .catch(() => setOnline(false));
   }, []);
 
-  // Auto-dismiss toast after 3s
+  // Auto-dismiss toast notification after 3 seconds
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3000);
-    return () => clearTimeout(t);
+    return () => clearTimeout(t);  // cleanup timer if toast changes before 3s
   }, [toast]);
 
+  // showToast — called by child components to show a success/error message
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
   }, []);
 
+  // triggerRefresh — called after a transfer/donation to reload data in all components
   const triggerRefresh = useCallback(() => setRefresh(r => r + 1), []);
 
+  // After login, redirect donor to Donate tab, NGO to Dashboard
+  function handleLogin(u) {
+    setUser(u);
+    setTab(u.role === "donor" ? "Donate" : "Dashboard");
+  }
+
+  // Logout — clear user from state and localStorage, show Auth screen
+  function handleLogout() {
+    localStorage.removeItem("user");
+    setUser(null);
+  }
+
+  // If no user is logged in, show the Auth (login/signup) screen
+  if (!user) return <Auth onLogin={handleLogin} />;
+
+  // Filter tabs based on the logged-in user's role
+  const TABS = ALL_TABS.filter(t => t.roles.includes(user.role));
+
   return (
-    <AppContext.Provider value={{ showToast, triggerRefresh, refresh }}>
+    // Provide global context to all child components
+    <AppContext.Provider value={{ showToast, triggerRefresh, refresh, user }}>
       <div className="app">
 
-        {/* Header */}
+        {/* Top navigation header with logo, tabs, and user info */}
         <header className="header">
           <div className="logo">
             <span className="logo-icon">🍛</span>
             <span>SmartRedistribute</span>
           </div>
           <nav>
+            {/* Render only the tabs this user's role is allowed to see */}
             {TABS.map(t => (
               <button
                 key={t.id}
@@ -67,9 +102,13 @@ export default function App() {
               </button>
             ))}
           </nav>
+          <div className="header-user">
+            <span className="user-badge">{user.role === "ngo" ? "🏢" : "🍽️"} {user.name}</span>
+            <button className="btn btn-sm btn-secondary" onClick={handleLogout}>Logout</button>
+          </div>
         </header>
 
-        {/* Backend status banner */}
+        {/* Show a banner if backend is offline — helps with debugging */}
         {online === false && (
           <div className="status-banner error">
             ⚠️ Backend is offline — start Flask server on port 5000 to use the app.
@@ -81,13 +120,14 @@ export default function App() {
           </div>
         )}
 
-        {/* Toast notification */}
+        {/* Toast notification — appears briefly after actions like confirm transfer */}
         {toast && (
           <div className={`toast toast-${toast.type}`}>
             {toast.type === "success" ? "✅" : "❌"} {toast.msg}
           </div>
         )}
 
+        {/* Main content area — renders the active tab's component */}
         <main className="main">
           {tab === "Dashboard" && <Dashboard />}
           {tab === "Alerts"    && <Alerts />}
@@ -105,4 +145,6 @@ export default function App() {
   );
 }
 
+// useApp — custom hook so any component can access the global context easily
+// Usage: const { showToast, triggerRefresh, refresh, user } = useApp();
 export function useApp() { return useContext(AppContext); }

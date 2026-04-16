@@ -1,21 +1,32 @@
+// Donate.js
+// Form for donors (restaurants, events, canteens) to submit surplus food.
+// After submission, the backend auto-matches the donation to the nearest deficit NGO.
+
 import React, { useState } from "react";
 import { api } from "../api";
 import { useApp } from "../App";
 
 export default function Donate() {
+  // Form state — holds all input field values
   const [form, setForm] = useState({
-    donor_name: "", food_quantity: "", food_type: "Veg",
-    latitude: "", longitude: "", expiry_hours: "2"
+    donor_name:    "",
+    food_quantity: "",
+    food_type:     "Veg",
+    latitude:      "",
+    longitude:     "",
+    expiry_hours:  "2"
   });
-  const [result, setResult]   = useState(null);
-  const [error, setError]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [locating, setLocating] = useState(false);
+  const [result, setResult]     = useState(null);   // response from backend after submission
+  const [error, setError]       = useState("");     // error message to show user
+  const [loading, setLoading]   = useState(false);  // disable submit button while posting
+  const [locating, setLocating] = useState(false);  // show loading on GPS button
   const { showToast } = useApp();
 
+  // Helper to update a single form field without overwriting others
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  // UX Principle: GPS auto-detect with loading feedback
+  // useMyLocation — uses browser's Geolocation API to auto-fill lat/lng
+  // This reduces friction for donors — they don't need to look up coordinates
   const useMyLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.");
@@ -24,35 +35,42 @@ export default function Donate() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       pos => {
+        // Success: fill in the coordinates from the browser
         set("latitude",  pos.coords.latitude.toFixed(4));
         set("longitude", pos.coords.longitude.toFixed(4));
         setLocating(false);
         showToast("Location detected successfully!");
       },
       () => {
+        // Failure: user denied location access or GPS unavailable
         setError("Location access denied. Please enter coordinates manually.");
         setLocating(false);
       }
     );
   };
 
+  // submit — sends the donation form to the backend
+  // Backend will auto-match it to the nearest deficit NGO
   const submit = async (e) => {
-    e.preventDefault();
+    e.preventDefault();  // prevent page reload on form submit
     setError(""); setResult(null); setLoading(true);
+
     const res = await api.post("/donate", {
       ...form,
-      food_quantity: Number(form.food_quantity),
+      food_quantity: Number(form.food_quantity),  // convert string inputs to numbers
       latitude:      Number(form.latitude),
       longitude:     Number(form.longitude),
       expiry_hours:  Number(form.expiry_hours)
     });
+
     setLoading(false);
+
     if (!res || res.error) {
       setError(res?.error || "Something went wrong. Try again.");
     } else {
-      setResult(res);
+      setResult(res);  // show the matched NGO name in the success message
       showToast("Donation submitted successfully!");
-      // Reset form
+      // Reset form so donor can submit another donation
       setForm({ donor_name: "", food_quantity: "", food_type: "Veg", latitude: "", longitude: "", expiry_hours: "2" });
     }
   };
@@ -60,18 +78,18 @@ export default function Donate() {
   return (
     <div>
       <h2 style={{ marginBottom: 6 }}>🍛 Donate Food</h2>
-      {/* UX Principle: Context — explain what this form does */}
       <p style={{ color: "#718096", fontSize: "0.88rem", marginBottom: 20 }}>
         Submit surplus food from your event, restaurant, or canteen. Our AI will instantly match it to the nearest NGO in need.
       </p>
 
       <div className="row">
+        {/* Left column: the donation form */}
         <div className="col">
           <div className="card">
             <form onSubmit={submit}>
               <div className="form-grid">
 
-                {/* UX Principle: Group related fields together */}
+                {/* Donor name — identifies who is donating */}
                 <div className="field form-full">
                   <label>Donor Name / Event</label>
                   <input
@@ -82,6 +100,7 @@ export default function Donate() {
                   />
                 </div>
 
+                {/* Food quantity — number of plates/meals being donated */}
                 <div className="field">
                   <label>Food Quantity (plates)</label>
                   <input
@@ -92,6 +111,7 @@ export default function Donate() {
                   />
                 </div>
 
+                {/* Food type — helps NGOs know if it's suitable for their beneficiaries */}
                 <div className="field">
                   <label>Food Type</label>
                   <select value={form.food_type} onChange={e => set("food_type", e.target.value)}>
@@ -101,6 +121,7 @@ export default function Donate() {
                   </select>
                 </div>
 
+                {/* Expiry hours — how long the food is safe to eat */}
                 <div className="field form-full">
                   <label>Use Within (hours)</label>
                   <input
@@ -111,7 +132,7 @@ export default function Donate() {
                   <span className="form-hint">Food must be consumed within this time window</span>
                 </div>
 
-                {/* UX Principle: GPS auto-detect reduces friction */}
+                {/* GPS location — used by AI to find the nearest NGO to this donor */}
                 <div className="field form-full">
                   <label>Your Location</label>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -125,6 +146,7 @@ export default function Donate() {
                       onChange={e => set("longitude", e.target.value)}
                       placeholder="Longitude (e.g. 73.8567)"
                     />
+                    {/* Auto-detect button — fills lat/lng using browser GPS */}
                     <button
                       type="button"
                       className="btn btn-secondary"
@@ -146,7 +168,10 @@ export default function Donate() {
               </div>
             </form>
 
+            {/* Error message — shown if submission fails */}
             {error  && <div className="error-msg mt-12">{error}</div>}
+
+            {/* Success message — shows which NGO was matched to this donation */}
             {result && (
               <div className="success-msg mt-12">
                 <strong>✅ Donation submitted!</strong><br />
@@ -158,7 +183,7 @@ export default function Donate() {
           </div>
         </div>
 
-        {/* UX Principle: Contextual help panel alongside the form */}
+        {/* Right column: "How it works" info panel — helps donors understand the process */}
         <div className="col" style={{ maxWidth: 300 }}>
           <div className="card">
             <h3 style={{ marginBottom: 14, fontSize: "0.95rem" }}>💡 How it works</h3>
@@ -180,6 +205,7 @@ export default function Donate() {
             ))}
           </div>
 
+          {/* Motivational message to encourage donors */}
           <div className="card" style={{ background: "#f0fff4", border: "1px solid #c6f6d5" }}>
             <p style={{ fontSize: "0.82rem", color: "#276749", lineHeight: 1.6 }}>
               🌱 Every plate donated prevents food waste and feeds someone in need.

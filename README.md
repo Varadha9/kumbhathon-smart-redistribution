@@ -1,7 +1,7 @@
 # 🍛 Smart Redistribution App
 ### AI-Powered Food Redistribution Platform | Kumbhathon Project
 
-> Connecting NGOs in real-time to eliminate food waste and fight hunger using AI-based smart matching and geolocation.
+> Connecting NGOs and donors in real-time to eliminate food waste and fight hunger using AI-based smart matching and geolocation.
 
 ---
 
@@ -17,6 +17,7 @@
 - [AI Logic Explained](#-ai-logic-explained)
 - [API Reference](#-api-reference)
 - [Getting Started](#-getting-started)
+- [Role-Based Access](#-role-based-access)
 - [Screenshots](#-screenshots)
 - [Socio-Economic Impact](#-socio-economic-impact)
 - [Challenges & Limitations](#-challenges--limitations)
@@ -42,23 +43,25 @@ Every day in India:
 
 The Smart Redistribution App is a full-stack web platform where:
 
-1. **NGOs** register and update their food availability + people count
-2. **Donors** (restaurants, events, canteens) submit surplus food with GPS location
+1. **NGOs** sign up, register their location, and update food availability + people count
+2. **Donors** (restaurants, events, canteens) sign up and submit surplus food with GPS location
 3. **AI Engine** detects surplus/deficit, calculates distances, and generates transfer alerts
 4. **NGOs** confirm transfers — food moves from surplus to deficit in minutes
+5. **History** tab tracks all past transfers and donations with timestamps
 
 ---
 
 ## 📱 Live Demo Flow
 
 ```
-Step 1: Open app → Click "Load Demo Data" on Dashboard
-Step 2: See 4 NGOs with surplus/deficit status in the table + bar chart
-Step 3: Go to Alerts tab → AI shows transfer suggestions with distance + urgency
-Step 4: Click "Confirm Transfer" → food counts update automatically
-Step 5: Go to Map tab → See green (surplus) and red (deficit) NGO pins on live map
-Step 6: Go to Donate tab → Submit food as a donor with GPS auto-detect
-Step 7: Go to Register NGO → Add a new NGO or update food data
+Step 1: Open app → Sign up as NGO or Donor (or Sign In)
+Step 2: Dashboard → Click "Load Demo Data" to seed 4 sample NGOs
+Step 3: See NGOs with surplus/deficit status in the table + bar chart
+Step 4: Go to Alerts tab → AI shows transfer suggestions with distance + urgency
+Step 5: Click "Confirm Transfer" → food counts update automatically
+Step 6: Go to Map tab → See green (surplus) and red (deficit) NGO pins on live map
+Step 7: Go to Donate tab (Donor role) → Submit food with GPS auto-detect
+Step 8: Go to History tab → See all past transfers and donations with timestamps
 ```
 
 ---
@@ -67,6 +70,8 @@ Step 7: Go to Register NGO → Add a new NGO or update food data
 
 | Tab | Feature | Description |
 |-----|---------|-------------|
+| 🔐 Auth | Sign Up / Sign In | Role-based authentication (NGO or Donor) |
+| 🔐 Auth | GPS Auto-detect | NGOs auto-fill coordinates during signup |
 | 📊 Dashboard | Live Stats | Total NGOs, food available, people to feed, meals redistributed |
 | 📊 Dashboard | NGO Table | All NGOs with surplus/deficit status |
 | 📊 Dashboard | Bar Chart | Visual comparison of food vs need per NGO |
@@ -80,8 +85,11 @@ Step 7: Go to Register NGO → Add a new NGO or update food data
 | 🗺️ Map | Color Coding | Green = surplus, Red = deficit |
 | 🗺️ Map | Radius Circles | Visual coverage area per NGO |
 | 🗺️ Map | Popups | Click marker to see food/people data |
-| 🏢 Register NGO | Add NGO | Register new NGOs with location coordinates |
-| 🏢 Register NGO | Update Data | Update food available + people count anytime |
+| 📋 History | Transfer Log | All confirmed transfers with timestamps |
+| 📋 History | Donation Log | All submitted donations with matched NGO |
+| 📋 History | Impact Summary | Total meals redistributed, transfers done, donations received |
+| 🏢 Register | Add NGO | Register new NGOs with location coordinates (admin only) |
+| 🏢 Register | Update Data | Update food available + people count anytime |
 
 ---
 
@@ -92,7 +100,7 @@ Step 7: Go to Register NGO → Add a new NGO or update food data
 |-----------|---------|
 | Python 3 | Core language |
 | Flask | REST API framework |
-| Flask-CORS | Cross-origin requests |
+| Flask-CORS | Cross-origin requests from React |
 | Haversine Formula | Distance calculation between GPS coordinates |
 
 ### Frontend
@@ -108,6 +116,7 @@ Step 7: Go to Register NGO → Add a new NGO or update food data
 | Technology | Purpose |
 |-----------|---------|
 | In-memory store | Fast prototyping (dict/list in Python) |
+| localStorage | Persist login session in browser |
 | REST API | JSON communication between frontend and backend |
 
 ---
@@ -118,23 +127,25 @@ Step 7: Go to Register NGO → Add a new NGO or update food data
 kumbhathon-smart-redistribution/
 │
 ├── backend/
-│   ├── app.py                  # Flask API — all 7 endpoints
-│   ├── redistribution.py       # AI matching engine + Haversine formula
+│   ├── app.py                  # Flask API — all endpoints (auth, NGO, alerts, donate, history)
+│   ├── redistribution.py       # AI matching engine + Haversine formula (fully commented)
 │   ├── requirements.txt        # Python dependencies
-│   └── test_logic.py           # Test script for AI logic
+│   └── test_logic.py           # Standalone test script for AI logic
 │
 ├── frontend/
 │   ├── public/
 │   │   └── index.html          # HTML entry point
 │   └── src/
 │       ├── components/
+│       │   ├── Auth.js         # Login + Signup with role selection (NGO / Donor)
 │       │   ├── Dashboard.js    # Stats cards + NGO table + bar chart
-│       │   ├── Alerts.js       # AI redistribution alerts + confirm
-│       │   ├── Donate.js       # Food donation form with GPS
+│       │   ├── Alerts.js       # AI redistribution alerts + confirm transfer
+│       │   ├── Donate.js       # Food donation form with GPS auto-detect
 │       │   ├── NGOMap.js       # Leaflet map with surplus/deficit markers
-│       │   └── RegisterNGO.js  # Register NGO + update food data forms
+│       │   ├── RegisterNGO.js  # Register NGO + update food data forms
+│       │   └── History.js      # Transfer and donation history with timestamps
 │       ├── api.js              # Shared fetch utility (GET/POST)
-│       ├── App.js              # Main app with tab navigation
+│       ├── App.js              # Main app — auth state, tab navigation, role-based access
 │       ├── App.css             # Global styles
 │       └── index.js            # React entry point
 │
@@ -147,41 +158,45 @@ kumbhathon-smart-redistribution/
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│           React Frontend                │
-│         (localhost:3000)                │
-│                                         │
-│  Dashboard | Alerts | Donate | Map | Register │
-└──────────────────┬──────────────────────┘
-                   │ REST API (JSON)
-                   ▼
-┌─────────────────────────────────────────┐
-│           Flask Backend                 │
-│         (localhost:5000)                │
-│                                         │
-│  /api/ngos  /api/alerts  /api/donate    │
-│  /api/ngo/register  /api/ngo/update     │
-│  /api/transfer/confirm  /api/stats      │
-└──────────────────┬──────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                  React Frontend                     │
+│               (localhost:3000)                      │
+│                                                     │
+│  Auth | Dashboard | Alerts | Donate | Map | History │
+└──────────────────────┬──────────────────────────────┘
+                       │ REST API (JSON)
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│                  Flask Backend                      │
+│               (localhost:5001)                      │
+│                                                     │
+│  /api/auth/signup    /api/auth/signin               │
+│  /api/ngos           /api/alerts        /api/stats  │
+│  /api/ngo/register   /api/ngo/update               │
+│  /api/donate         /api/transfer/confirm          │
+│  /api/history/transfers  /api/history/donations     │
+│  /api/seed                                          │
+└──────────────────┬──────────────────────────────────┘
                    │
          ┌─────────┴──────────┐
          ▼                    ▼
 ┌─────────────────┐  ┌────────────────────┐
 │  In-Memory Store│  │  Redistribution    │
 │  (ngos, donors, │  │  Engine            │
-│   transfers)    │  │                    │
-│                 │  │  - Surplus/Deficit │
-│  → upgrade to   │  │  - Haversine Dist  │
-│  Firebase /     │  │  - Best NGO Match  │
-│  MongoDB        │  │  - Urgency Score   │
-└─────────────────┘  └────────────────────┘
+│   transfers,    │  │                    │
+│   users)        │  │  - Surplus/Deficit │
+│                 │  │  - Haversine Dist  │
+│  → upgrade to   │  │  - Best NGO Match  │
+│  Firebase /     │  │  - Urgency Score   │
+│  MongoDB        │  └────────────────────┘
+└─────────────────┘
 ```
 
 ---
 
 ## 🧠 AI Logic Explained
 
-The core intelligence lives in `backend/redistribution.py`.
+The core intelligence lives in `backend/redistribution.py` (fully commented).
 
 ### Step 1 — Classify NGOs
 ```python
@@ -235,27 +250,51 @@ urgency = "HIGH" if deficit > 100 meals else "MEDIUM"
 
 ---
 
+## 🔐 Role-Based Access
+
+| Tab | Donor | NGO | Admin |
+|-----|-------|-----|-------|
+| Dashboard | ✅ | ✅ | ✅ |
+| Alerts | ❌ | ✅ | ✅ |
+| Donate | ✅ | ❌ | ✅ |
+| Map | ✅ | ✅ | ✅ |
+| History | ✅ | ✅ | ✅ |
+| Register NGO | ❌ | ❌ | ✅ |
+
+- **Donor** — submits food donations, sees map and history
+- **NGO** — sees alerts, confirms transfers, updates food data
+- **Admin** — full access including NGO registration
+
+---
+
 ## 📡 API Reference
 
-### Base URL: `http://localhost:5000/api`
+### Base URL: `http://localhost:5001/api`
 
 | Method | Endpoint | Description | Body |
 |--------|---------|-------------|------|
+| `POST` | `/auth/signup` | Create account (NGO or Donor) | `name, email, password, role, [location, latitude, longitude]` |
+| `POST` | `/auth/signin` | Login | `email, password` |
 | `GET` | `/ngos` | Get all registered NGOs | — |
 | `GET` | `/alerts` | Get AI redistribution alerts | — |
 | `GET` | `/stats` | Get platform statistics | — |
+| `GET` | `/history/transfers` | Get all confirmed transfers | — |
+| `GET` | `/history/donations` | Get all submitted donations | — |
 | `POST` | `/ngo/register` | Register a new NGO | `ngo_name, location, latitude, longitude, contact` |
 | `POST` | `/ngo/update` | Update NGO food data | `ngo_name, food_available, people_count` |
 | `POST` | `/donate` | Submit a food donation | `donor_name, food_quantity, food_type, latitude, longitude, expiry_hours` |
 | `POST` | `/transfer/confirm` | Confirm a transfer alert | `from, to, meals_to_transfer` |
 | `POST` | `/seed` | Load demo data | — |
 
-### Sample Request — Register NGO
+### Sample Request — Sign Up as NGO
 ```bash
-curl -X POST http://localhost:5000/api/ngo/register \
+curl -X POST http://localhost:5001/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
-    "ngo_name": "Helping Hands",
+    "name": "Helping Hands",
+    "email": "helpinghands@ngo.com",
+    "password": "secure123",
+    "role": "ngo",
     "location": "Pune",
     "latitude": 18.5204,
     "longitude": 73.8567,
@@ -306,7 +345,7 @@ cd backend
 pip install -r requirements.txt
 python app.py
 ```
-Backend runs at → `http://localhost:5000`
+Backend runs at → `http://localhost:5001`
 
 **Frontend**
 ```bash
@@ -326,7 +365,8 @@ Expected output:
 === Redistribution Alerts ===
   Move 300 meals: NGO A -> NGO B | 1.77 km | HIGH
   Move 300 meals: NGO A -> NGO C | 3.49 km | HIGH
-Distance A->B: 1.77 km
+Distance A→B: 1.77 km
+✅ AI logic working correctly!
 ```
 
 ---
@@ -367,12 +407,14 @@ Distance A->B: 1.77 km
 | Logistics Coordination | Vehicles and timing need manual coordination | Volunteer/driver assignment module |
 | Food Quality Verification | No way to verify food is safe to eat | Photo upload + quality checklist |
 | In-Memory Storage | Data resets when server restarts | Firebase / MongoDB integration |
+| Password Security | Passwords stored as plain text | Hash with bcrypt in production |
 
 ---
 
 ## 🔮 Future Enhancements
 
 - [ ] **Firebase Real-time Database** — Persistent data, live sync across devices
+- [ ] **Password Hashing** — bcrypt for secure password storage
 - [ ] **Push Notifications** — Instant alerts to NGO mobile apps
 - [ ] **IoT Sensor Integration** — Auto-detect food quantity via smart containers
 - [ ] **Government Food Program API** — Connect with PDS and mid-day meal schemes

@@ -1,14 +1,19 @@
+// History.js
+// Shows a log of all past activity — confirmed transfers and submitted donations.
+// Useful for NGOs and donors to track what has happened on the platform.
+
 import React, { useEffect, useState, useCallback } from "react";
 import { api } from "../api";
 import { useApp } from "../App";
 
 export default function History() {
-  const [transfers, setTransfers] = useState([]);
-  const [donations, setDonations] = useState([]);
-  const [tab, setTab]             = useState("transfers");
+  const [transfers, setTransfers] = useState([]);  // all confirmed food transfers
+  const [donations, setDonations] = useState([]);  // all submitted food donations
+  const [tab, setTab]             = useState("transfers");  // which sub-tab is active
   const [loading, setLoading]     = useState(true);
-  const { refresh }               = useApp();
+  const { refresh }               = useApp();  // re-fetch when global refresh triggers
 
+  // Fetch both transfers and donations in parallel
   const load = useCallback(async () => {
     setLoading(true);
     const [t, d] = await Promise.all([
@@ -22,6 +27,8 @@ export default function History() {
 
   useEffect(() => { load(); }, [load, refresh]);
 
+  // fmt — formats an ISO timestamp into a readable date/time string
+  // e.g. "2024-01-15T14:30:00" → "15 Jan 2024, 2:30 pm"
   const fmt = (iso) => {
     if (!iso) return "—";
     const d = new Date(iso);
@@ -39,7 +46,7 @@ export default function History() {
         <button className="btn btn-secondary btn-sm" onClick={load}>↻ Refresh</button>
       </div>
 
-      {/* UX Principle: Sub-tabs for organizing two types of history */}
+      {/* Sub-tab buttons to switch between Transfers and Donations history */}
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         <button
           className={`btn ${tab === "transfers" ? "btn-primary" : "btn-secondary"}`}
@@ -55,6 +62,7 @@ export default function History() {
         </button>
       </div>
 
+      {/* Transfers tab — shows all confirmed NGO-to-NGO food transfers */}
       {tab === "transfers" && (
         <div className="card">
           {transfers.length === 0 ? (
@@ -92,6 +100,7 @@ export default function History() {
         </div>
       )}
 
+      {/* Donations tab — shows all food donations submitted by donors */}
       {tab === "donations" && (
         <div className="card">
           {donations.length === 0 ? (
@@ -108,7 +117,7 @@ export default function History() {
                   <th>Donor</th>
                   <th>Quantity</th>
                   <th>Type</th>
-                  <th>Matched NGO</th>
+                  <th>Matched NGO</th>  {/* which NGO the AI matched this donation to */}
                   <th>Status</th>
                   <th>Time</th>
                 </tr>
@@ -120,8 +129,10 @@ export default function History() {
                     <td>{d.donor_name}</td>
                     <td><strong>{d.food_quantity}</strong> plates</td>
                     <td>{d.food_type}</td>
+                    {/* Show matched NGO name, or "Pending" if not yet matched */}
                     <td>{d.matched_ngo || <span style={{ color: "#a0aec0" }}>Pending</span>}</td>
                     <td>
+                      {/* "matched" = green badge, "pending" = yellow badge */}
                       <span className={`badge ${d.status === "matched" ? "done" : "medium"}`}>
                         {d.status}
                       </span>
@@ -135,10 +146,11 @@ export default function History() {
         </div>
       )}
 
-      {/* UX Principle: Summary stats at the bottom */}
+      {/* Summary stats at the bottom — total impact numbers */}
       {(transfers.length > 0 || donations.length > 0) && (
         <div className="card" style={{ background: "#f0fff4", border: "1px solid #c6f6d5" }}>
           <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+            {/* Total meals moved across all confirmed transfers */}
             <div>
               <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1b4332" }}>
                 {transfers.reduce((s, t) => s + (t.meals_to_transfer || 0), 0)}

@@ -325,3 +325,116 @@ form input::placeholder { color: #a0aec0; }
   .stat-card .value { font-size: 1.6rem; }
   .map-container { height: 320px; }
 }
+
+/* ── Auth Page ── */
+.auth-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1b4332 0%, #40916c 60%, #74c69d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.auth-card {
+  background: white;
+  border-radius: 18px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+.auth-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1b4332;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.auth-tagline {
+  text-align: center;
+  font-size: 0.82rem;
+  color: #a0aec0;
+  margin-bottom: 22px;
+}
+.auth-tabs {
+  display: flex;
+  background: #f0f4f8;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 22px;
+}
+.auth-tabs button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #718096;
+  transition: all 0.18s;
+}
+.auth-tabs button.active {
+  background: white;
+  color: #1b4332;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+}
+.role-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.role-selector button {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #4a5568;
+  transition: all 0.18s;
+}
+.role-selector button.active {
+  border-color: #40916c;
+  background: #f0fff4;
+  color: #1b4332;
+}
+.auth-card form { display: flex; flex-direction: column; gap: 14px; }
+.auth-submit { width: 100%; justify-content: center; padding: 11px; font-size: 0.95rem; margin-top: 4px; }
+.auth-switch {
+  text-align: center;
+  font-size: 0.83rem;
+  color: #718096;
+  margin-top: 18px;
+}
+.auth-switch span {
+  color: #40916c;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── Header User Info ── */
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+.user-badge {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .auth-card { padding: 28px 20px; }
+  .user-badge { display: none; }
+}
+
+/* ── GPS Button ── */
+.gps-btn { width: 100%; justify-content: center; }

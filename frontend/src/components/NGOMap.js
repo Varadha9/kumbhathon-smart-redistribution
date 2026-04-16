@@ -1,3 +1,9 @@
+// NGOMap.js
+// Interactive map showing all NGOs as colored markers.
+// Green marker = surplus NGO (has extra food)
+// Red marker   = deficit NGO (needs more food)
+// Uses Leaflet + OpenStreetMap (free, no API key needed).
+
 import React, { useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L from "leaflet";
@@ -5,6 +11,7 @@ import "leaflet/dist/leaflet.css";
 import { api } from "../api";
 import { useApp } from "../App";
 
+// Fix for Leaflet's default marker icons not loading in React (known Leaflet + webpack issue)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -12,11 +19,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     require("leaflet/dist/images/marker-shadow.png"),
 });
 
+// Custom green marker icon — used for surplus NGOs
 const surplusIcon = new L.Icon({
   iconUrl:   "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
 });
+
+// Custom red marker icon — used for deficit NGOs
 const deficitIcon = new L.Icon({
   iconUrl:   "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
@@ -24,9 +34,9 @@ const deficitIcon = new L.Icon({
 });
 
 export default function NGOMap() {
-  const [ngos, setNgos]       = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { refresh }           = useApp();
+  const [ngos, setNgos]       = useState([]);    // list of all NGOs to plot on map
+  const [loading, setLoading] = useState(true);  // show spinner while fetching
+  const { refresh }           = useApp();        // re-fetch when global refresh triggers
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,10 +47,12 @@ export default function NGOMap() {
 
   useEffect(() => { load(); }, [load, refresh]);
 
+  // Center the map on the first NGO's location, or default to Pune if no NGOs
   const center = ngos.length > 0
     ? [ngos[0].latitude, ngos[0].longitude]
-    : [18.5204, 73.8567];
+    : [18.5204, 73.8567];  // default: Pune city center
 
+  // Count surplus and deficit NGOs for the legend
   const surplusCount = ngos.filter(n => n.food_available > n.people_count).length;
   const deficitCount = ngos.filter(n => n.food_available <= n.people_count).length;
 
@@ -51,7 +63,7 @@ export default function NGOMap() {
         <button className="btn btn-secondary btn-sm" onClick={load}>↻ Refresh</button>
       </div>
 
-      {/* UX Principle: Legend for visual encoding */}
+      {/* Legend — explains what green and red markers mean */}
       <div className="map-legend">
         <span>🟢 Surplus NGOs ({surplusCount})</span>
         <span>🔴 Deficit NGOs ({deficitCount})</span>
@@ -62,21 +74,26 @@ export default function NGOMap() {
         <div className="spinner-wrap"><div className="spinner" /><span>Loading map...</span></div>
       ) : (
         <div className="map-container">
+          {/* MapContainer — the Leaflet map wrapper */}
           <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
+            {/* TileLayer — loads map tiles from OpenStreetMap (free, no API key) */}
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
             />
+
+            {/* Render one marker + circle per NGO */}
             {ngos.map(n => {
               const surplus = n.food_available > n.people_count;
               const diff    = Math.abs(n.food_available - n.people_count);
               return (
                 <React.Fragment key={n.ngo_name}>
+                  {/* Marker — green for surplus, red for deficit */}
                   <Marker
                     position={[n.latitude, n.longitude]}
                     icon={surplus ? surplusIcon : deficitIcon}
                   >
-                    {/* UX Principle: Popup shows all relevant info in one place */}
+                    {/* Popup — shows NGO details when marker is clicked */}
                     <Popup>
                       <div style={{ minWidth: 160 }}>
                         <strong style={{ fontSize: "0.95rem" }}>{n.ngo_name}</strong>
@@ -86,13 +103,16 @@ export default function NGOMap() {
                         <p>👥 People to feed: <strong>{n.people_count}</strong></p>
                         <p>📞 {n.contact}</p>
                         <hr style={{ margin: "6px 0", borderColor: "#e2e8f0" }} />
+                        {/* Show surplus/deficit status with color */}
                         <p style={{ color: surplus ? "#276749" : "#c53030", fontWeight: 700 }}>
                           {surplus ? `✅ Surplus: +${diff} meals` : `⚠️ Deficit: -${diff} meals`}
                         </p>
                       </div>
                     </Popup>
                   </Marker>
-                  {/* UX Principle: Radius circles show coverage area visually */}
+
+                  {/* Circle — visual coverage area around each NGO (600m radius) */}
+                  {/* Green circle for surplus, red circle for deficit */}
                   <Circle
                     center={[n.latitude, n.longitude]}
                     radius={600}
@@ -107,6 +127,7 @@ export default function NGOMap() {
         </div>
       )}
 
+      {/* Empty state — shown when no NGOs are registered */}
       {ngos.length === 0 && !loading && (
         <div className="card mt-16">
           <div className="empty-state">
