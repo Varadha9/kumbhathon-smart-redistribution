@@ -40,7 +40,7 @@ export default function App() {
 
   // Check if Flask backend is reachable when the app first loads
   useEffect(() => {
-    fetch("http://localhost:5000/api/stats")
+    fetch("http://localhost:5001/api/stats")
       .then(() => setOnline(true))
       .catch(() => setOnline(false));
   }, []);
