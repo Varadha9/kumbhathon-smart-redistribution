@@ -254,4 +254,4 @@ def seed_demo_data():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)  # Run on port 5001 (frontend expects this port)
+    app.run(debug=True, host="0.0.0.0", port=5001)  # 0.0.0.0 = accessible from any device on same network
