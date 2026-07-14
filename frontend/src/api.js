@@ -10,7 +10,7 @@
 // 3. Replace "localhost" below with that IP
 // 4. Also update the fetch() URL in App.js the same way
 // ─────────────────────────────────────────────────────────────
-const BASE = "http://localhost:5001/api";  // Flask backend base URL
+const BASE = "http://localhost:8080/api";  // Spring Boot backend base URL
 
 export const api = {
   // GET request — used to fetch data (NGOs, alerts, stats, history)

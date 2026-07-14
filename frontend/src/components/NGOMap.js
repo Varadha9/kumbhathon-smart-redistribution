@@ -50,7 +50,7 @@ export default function NGOMap() {
   // Center the map on the first NGO's location, or default to Pune if no NGOs
   const center = ngos.length > 0
     ? [ngos[0].latitude, ngos[0].longitude]
-    : [18.5204, 73.8567];  // default: Pune city center
+    : [25.4358, 81.8463];  // default: Prayagraj Sangam (Kumbh Mela site)
 
   // Count surplus and deficit NGOs for the legend
   const surplusCount = ngos.filter(n => n.food_available > n.people_count).length;
@@ -59,7 +59,7 @@ export default function NGOMap() {
   return (
     <div>
       <div className="section-header">
-        <h2>🗺️ Live NGO Map</h2>
+        <h2>🗺️ Kumbh Mela Live Camp Map</h2>
         <button className="btn btn-secondary btn-sm" onClick={load}>↻ Refresh</button>
       </div>
 
@@ -99,8 +99,9 @@ export default function NGOMap() {
                         <strong style={{ fontSize: "0.95rem" }}>{n.ngo_name}</strong>
                         <hr style={{ margin: "6px 0", borderColor: "#e2e8f0" }} />
                         <p>📍 {n.location}</p>
+                        {n.kumbh_zone && <p>🗺️ {n.kumbh_zone}</p>}
                         <p>🍛 Food available: <strong>{n.food_available}</strong></p>
-                        <p>👥 People to feed: <strong>{n.people_count}</strong></p>
+                        <p>🙏 Pilgrims to feed: <strong>{n.people_count}</strong></p>
                         <p>📞 {n.contact}</p>
                         <hr style={{ margin: "6px 0", borderColor: "#e2e8f0" }} />
                         {/* Show surplus/deficit status with color */}
@@ -132,8 +133,8 @@ export default function NGOMap() {
         <div className="card mt-16">
           <div className="empty-state">
             <div className="empty-icon">🗺️</div>
-            <p>No NGOs on the map yet</p>
-            <small>Go to Dashboard and click "Load Demo Data" to see NGOs on the map</small>
+            <p>No Kumbh camps on the map yet</p>
+            <small>Go to Dashboard and click "Load Kumbh Demo Data" to see camps on the map</small>
           </div>
         </div>
       )}

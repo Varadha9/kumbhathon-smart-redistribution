@@ -37,6 +37,13 @@ body {
   padding: 12px 0;
 }
 .logo-icon { font-size: 1.6rem; }
+.logo-sub {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.3px;
+  margin-left: -6px;
+}
 
 /* ── Navigation ── */
 nav {
@@ -147,7 +154,8 @@ nav button.active {
   transition: box-shadow 0.18s;
 }
 .alert-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-.alert-card.medium { border-left-color: #dd6b20; }
+.alert-card.medium   { border-left-color: #dd6b20; }
+.alert-card.critical { border-left-color: #c53030; background: #fff5f5; }
 .alert-card.confirmed { border-left-color: #40916c; opacity: 0.75; }
 .alert-info h3 { font-size: 0.95rem; margin-bottom: 5px; color: #2d3748; }
 .alert-info p  { font-size: 0.83rem; color: #718096; margin-top: 3px; }
@@ -162,9 +170,10 @@ nav button.active {
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
-.badge.high   { background: #fed7d7; color: #c53030; }
-.badge.medium { background: #feebc8; color: #c05621; }
-.badge.done   { background: #c6f6d5; color: #276749; }
+.badge.high     { background: #fed7d7; color: #c53030; }
+.badge.medium   { background: #feebc8; color: #c05621; }
+.badge.done     { background: #c6f6d5; color: #276749; }
+.badge.critical { background: #c53030; color: white; animation: pulse 1.2s infinite; }
 
 /* ── Buttons ── */
 .btn {
@@ -309,10 +318,65 @@ form input::placeholder { color: #a0aec0; }
   margin-top: auto;
 }
 
-/* ── Animations ── */
+/* ── Kumbh Impact Banner ── */
+.kumbh-impact-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  background: linear-gradient(135deg, #7b2d00, #c05621);
+  color: white;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 12px rgba(192,86,33,0.3);
+}
+.kumbh-impact-banner strong { font-size: 1rem; }
+
+/* ── Zone Match Badge ── */
+.zone-match-badge {
+  display: inline-block;
+  margin-left: 10px;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  vertical-align: middle;
+}
+
+/* ── Header gradient updated for Kumbh saffron accent ── */
+.header {
+  background: linear-gradient(135deg, #7b2d00, #c05621 50%, #40916c);
+}
 @keyframes spin     { to { transform: rotate(360deg); } }
 @keyframes slideUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideDown{ from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse    { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
+
+/* ── Volunteer Dispatch Board ── */
+.volunteer-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border-left: 4px solid #dd6b20;
+  background: #fffaf0;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.volunteer-card.delivered {
+  border-left-color: #40916c;
+  background: #f0fff4;
+  opacity: 0.85;
+}
+.volunteer-name { font-size: 0.95rem; margin-bottom: 4px; }
+.volunteer-route { font-size: 0.83rem; color: #4a5568; margin-bottom: 3px; }
+.volunteer-meta  { font-size: 0.75rem; color: #a0aec0; }
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
