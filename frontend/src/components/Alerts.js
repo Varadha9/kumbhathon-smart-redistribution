@@ -1,19 +1,14 @@
-// Alerts.js
-// Shows AI-generated transfer suggestions — which NGO should send food to which.
-// NGOs can confirm transfers here, which updates food counts on both sides.
-
 import React, { useEffect, useState, useCallback } from "react";
 import { api } from "../api";
 import { useApp } from "../App";
 
 export default function Alerts() {
-  const [alerts, setAlerts]         = useState([]);   // list of AI-generated transfer suggestions
-  const [confirmed, setConfirmed]   = useState({});   // tracks which alerts have been confirmed (by index)
-  const [loading, setLoading]       = useState(true); // show spinner while fetching alerts
-  const [confirming, setConfirming] = useState({});   // tracks which confirm button is in loading state
-  const { showToast, triggerRefresh, refresh } = useApp();
+  const [alerts, setAlerts]         = useState([]);
+  const [confirmed, setConfirmed]   = useState({});
+  const [loading, setLoading]       = useState(true);
+  const [confirming, setConfirming] = useState({});
+  const { showToast, triggerRefresh, refresh, setTab } = useApp();
 
-  // Fetch alerts from the AI engine via /api/alerts
   const load = useCallback(async () => {
     setLoading(true);
     const data = await api.get("/alerts");
@@ -21,20 +16,15 @@ export default function Alerts() {
     setLoading(false);
   }, []);
 
-  // Re-fetch alerts when component mounts or global refresh is triggered
   useEffect(() => { load(); }, [load, refresh]);
 
-  // confirm — called when user clicks "Confirm Transfer" on an alert card
   const confirm = async (alert, idx) => {
-    setConfirming(prev => ({ ...prev, [idx]: true }));  // show loading on this button
-
-    // POST to /api/transfer/confirm — this updates food counts in the backend
+    setConfirming(prev => ({ ...prev, [idx]: true }));
     const res = await api.post("/transfer/confirm", alert);
-
     if (res?.transfer) {
-      setConfirmed(prev => ({ ...prev, [idx]: true }));  // mark this alert as done
-      showToast(`Transfer confirmed: ${alert.meals_to_transfer} meals from ${alert.from} to ${alert.to}`);
-      triggerRefresh();  // tell Dashboard to reload its stats (meals redistributed count will increase)
+      setConfirmed(prev => ({ ...prev, [idx]: true }));
+      showToast(`✅ ${alert.meals_to_transfer} meals: ${alert.from} → ${alert.to}`);
+      triggerRefresh();
     } else {
       showToast("Failed to confirm transfer", "error");
     }
@@ -44,69 +34,75 @@ export default function Alerts() {
   if (loading) return (
     <div className="spinner-wrap">
       <div className="spinner" />
-      <span>Calculating redistribution alerts...</span>
+      <span>Calculating Kumbh redistribution alerts...</span>
     </div>
   );
 
-  // Count how many alerts are still pending vs confirmed
   const pending   = alerts.filter((_, i) => !confirmed[i]);
   const doneCount = Object.keys(confirmed).length;
+
+  // Show demand reason from first alert (all share same time window)
+  const demandReason = alerts[0]?.demand_reason;
 
   return (
     <div>
       <div className="section-header">
-        <h2>🔔 Redistribution Alerts</h2>
+        <h2>🔔 Kumbh Redistribution Alerts</h2>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          {/* Show confirmed count badge if any transfers are done */}
-          {doneCount > 0 && (
-            <span className="badge done">{doneCount} confirmed</span>
-          )}
+          {doneCount > 0 && <span className="badge done">{doneCount} confirmed</span>}
           <button className="btn btn-secondary btn-sm" onClick={load}>↻ Refresh</button>
         </div>
       </div>
 
-      {/* Explain to the user what the AI did to generate these alerts */}
-      {alerts.length > 0 && (
-        <div className="info-msg mt-12" style={{ marginBottom: 16 }}>
-          🧠 AI matched <strong>{alerts.length} surplus-deficit NGO pairs</strong> using nearest-distance matching.
-          Confirm transfers to redistribute food instantly.
+      {/* Time-based demand prediction banner */}
+      {demandReason && (
+        <div className="info-msg" style={{ marginBottom: 16 }}>
+          ⏰ <strong>Demand Prediction:</strong> {demandReason}
         </div>
       )}
 
-      {/* Empty state — shown when all NGOs are balanced or no data loaded */}
+      {alerts.length > 0 && (
+        <div className="info-msg" style={{ marginBottom: 16 }}>
+          🧠 Smart Matching Engine found <strong>{alerts.length} transfer suggestions</strong> across Kumbh zones.
+          Same-zone transfers are prioritised for faster delivery.
+        </div>
+      )}
+
       {alerts.length === 0 ? (
         <div className="card">
           <div className="empty-state">
             <div className="empty-icon">🎉</div>
-            <p>No redistribution needed right now</p>
-            <small>All NGOs are balanced — or load demo data from Dashboard to see alerts</small>
+            <p>All Kumbh camps are balanced right now</p>
+            <small>Load Kumbh demo data from Dashboard to see zone-aware alerts</small>
           </div>
         </div>
       ) : (
-        // Render one card per alert
         alerts.map((a, i) => (
           <div
             key={i}
-            // Card style changes based on: confirmed, HIGH urgency, or MEDIUM urgency
-            className={`alert-card ${confirmed[i] ? "confirmed" : a.urgency === "HIGH" ? "" : "medium"}`}
+            className={`alert-card ${confirmed[i] ? "confirmed" : a.urgency === "CRITICAL" ? "critical" : a.urgency === "HIGH" ? "" : "medium"}`}
           >
             <div className="alert-info">
               <h3>
                 {confirmed[i] ? "✅ Transfer Completed" : "🔄 Transfer Suggested"}
+                {a.same_zone && !confirmed[i] && (
+                  <span className="zone-match-badge">⚡ Same Zone</span>
+                )}
               </h3>
               <p>
                 Move <strong>{a.meals_to_transfer} meals</strong> from{" "}
                 <strong>{a.from}</strong> → <strong>{a.to}</strong>
               </p>
-              <p>📍 Distance: <strong>{a.distance_km} km</strong> &nbsp;|&nbsp; 🕐 Act fast to avoid food waste</p>
+              <p style={{ fontSize: "0.78rem", color: "#a0aec0" }}>
+                📍 {a.from_zone} → {a.to_zone}
+              </p>
+              <p>📏 Distance: <strong>{a.distance_km} km</strong> &nbsp;|&nbsp; 🕐 Act fast to avoid food waste</p>
             </div>
 
             <div className="alert-actions">
-              {/* Urgency badge — HIGH (red) or MEDIUM (yellow) or DONE (green) */}
               <span className={`badge ${confirmed[i] ? "done" : a.urgency.toLowerCase()}`}>
                 {confirmed[i] ? "DONE" : a.urgency}
               </span>
-              {/* Confirm button — hidden after transfer is confirmed */}
               {!confirmed[i] && (
                 <button
                   className="btn btn-primary btn-sm"
@@ -116,18 +112,24 @@ export default function Alerts() {
                   {confirming[i] ? "Confirming..." : "Confirm Transfer"}
                 </button>
               )}
+              {confirmed[i] && setTab && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setTab("Volunteer")}
+                >
+                  🚴 Assign Volunteer
+                </button>
+              )}
             </div>
           </div>
         ))
       )}
 
-      {/* Success message when all transfers are confirmed */}
       {alerts.length > 0 && pending.length === 0 && (
         <div className="success-msg mt-12">
-          🎉 All transfers confirmed! Food is on its way to people who need it.
+          🎉 All transfers confirmed! Food is reaching pilgrims across Kumbh Mela zones.
         </div>
       )}
-      {/* Progress counter — how many transfers are still pending */}
       {alerts.length > 0 && pending.length > 0 && (
         <p style={{ fontSize: "0.8rem", color: "#a0aec0", marginTop: 8 }}>
           {pending.length} of {alerts.length} transfers pending confirmation

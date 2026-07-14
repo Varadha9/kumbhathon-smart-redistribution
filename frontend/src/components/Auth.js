@@ -61,8 +61,8 @@ export default function Auth({ onLogin }) {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">🍛 SmartRedistribute</div>
-        <p className="auth-tagline">Fighting hunger, one meal at a time</p>
+        <div className="auth-logo">🪔 KumbhAnna</div>
+        <p className="auth-tagline">Smart Food Network for Kumbh Mela 2025</p>
 
         {/* Toggle between Sign In and Sign Up */}
         <div className="auth-tabs">
@@ -90,7 +90,18 @@ export default function Auth({ onLogin }) {
                 <>
                   <div className="field">
                     <label>City / Location</label>
-                    <input required onChange={e => set("location", e.target.value)} />
+                    <input required onChange={e => set("location", e.target.value)} placeholder="e.g. Sangam Ghat, Prayagraj" />
+                  </div>
+                  <div className="field">
+                    <label>Kumbh Zone / Sector</label>
+                    <select onChange={e => set("kumbh_zone", e.target.value)}>
+                      <option value="">-- Select Zone --</option>
+                      <option>Zone A - Sangam</option>
+                      <option>Zone B - Ganga</option>
+                      <option>Zone C - Tent City</option>
+                      <option>Zone D - Yamuna</option>
+                      <option>Zone E - Outer Camp</option>
+                    </select>
                   </div>
                   {/* GPS auto-detect button for NGO location */}
                   <button type="button" className="btn btn-secondary btn-sm gps-btn" onClick={detectLocation} disabled={gpsLoading}>

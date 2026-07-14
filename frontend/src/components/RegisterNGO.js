@@ -11,7 +11,7 @@ import { useApp } from "../App";
 // ── Register Form ─────────────────────────────────────────────────────────────
 // Collects NGO details and posts to /api/ngo/register
 function RegisterForm({ onSuccess }) {
-  const [form, setForm]     = useState({ ngo_name: "", location: "", latitude: "", longitude: "", contact: "" });
+  const [form, setForm]     = useState({ ngo_name: "", location: "", kumbh_zone: "", latitude: "", longitude: "", contact: "" });
   const [msg, setMsg]       = useState("");     // success or error message
   const [loading, setLoading] = useState(false);
   const { showToast }       = useApp();
@@ -30,8 +30,8 @@ function RegisterForm({ onSuccess }) {
       setMsg(`error:${res.error}`);
     } else {
       setMsg(`success:${res.ngo.ngo_name} registered successfully!`);
-      showToast(`${res.ngo.ngo_name} added to the network!`);
-      setForm({ ngo_name: "", location: "", latitude: "", longitude: "", contact: "" });
+      showToast(`${res.ngo.ngo_name} added to the Kumbh network!`);
+      setForm({ ngo_name: "", location: "", kumbh_zone: "", latitude: "", longitude: "", contact: "" });
       onSuccess();  // tell parent to reload the NGO list (so UpdateForm dropdown updates)
     }
   };
@@ -52,10 +52,20 @@ function RegisterForm({ onSuccess }) {
             <input required value={form.ngo_name} onChange={e => set("ngo_name", e.target.value)} placeholder="e.g. Helping Hands Foundation" />
           </div>
           <div className="field form-full">
-            <label>City / Location</label>
-            <input required value={form.location} onChange={e => set("location", e.target.value)} placeholder="e.g. Pune, Maharashtra" />
+            <label>Location / Ghat</label>
+            <input required value={form.location} onChange={e => set("location", e.target.value)} placeholder="e.g. Sangam Ghat, Prayagraj" />
           </div>
-          {/* Latitude and longitude — used by AI for distance calculations */}
+          <div className="field form-full">
+            <label>Kumbh Zone / Sector</label>
+            <select value={form.kumbh_zone || ""} onChange={e => set("kumbh_zone", e.target.value)}>
+              <option value="">-- Select Zone --</option>
+              <option>Zone A - Sangam</option>
+              <option>Zone B - Ganga</option>
+              <option>Zone C - Tent City</option>
+              <option>Zone D - Yamuna</option>
+              <option>Zone E - Outer Camp</option>
+            </select>
+          </div>
           <div className="field">
             <label>Latitude</label>
             <input required type="number" step="any" value={form.latitude} onChange={e => set("latitude", e.target.value)} placeholder="e.g. 18.5204" />

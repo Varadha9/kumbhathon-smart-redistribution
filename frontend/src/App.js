@@ -10,6 +10,7 @@ import Donate     from "./components/Donate";
 import NGOMap     from "./components/NGOMap";
 import RegisterNGO from "./components/RegisterNGO";
 import History    from "./components/History";
+import Volunteer  from "./components/Volunteer";
 import Auth       from "./components/Auth";
 import "./App.css";
 
@@ -20,12 +21,13 @@ export const AppContext = createContext();
 // Tab definitions — each tab has an id, icon, and which roles can see it.
 // This controls role-based access: donors don't see Alerts, NGOs don't see Donate, etc.
 const ALL_TABS = [
-  { id: "Dashboard", icon: "📊", roles: ["ngo", "donor", "admin"] },  // everyone sees dashboard
-  { id: "Alerts",    icon: "🔔", roles: ["ngo", "admin"] },           // only NGOs see alerts
-  { id: "Donate",    icon: "🍛", roles: ["donor", "admin"] },         // only donors see donate
-  { id: "Map",       icon: "🗺️", roles: ["ngo", "donor", "admin"] }, // everyone sees map
-  { id: "History",   icon: "📋", roles: ["ngo", "donor", "admin"] }, // everyone sees history
-  { id: "Register",  icon: "🏢", roles: ["admin"] },                  // only admin sees register
+  { id: "Dashboard",  icon: "📊", roles: ["ngo", "donor", "admin"] },
+  { id: "Alerts",     icon: "🔔", roles: ["ngo", "admin"] },
+  { id: "Donate",     icon: "🍛", roles: ["donor", "admin"] },
+  { id: "Map",        icon: "🗺️", roles: ["ngo", "donor", "admin"] },
+  { id: "Volunteer",  icon: "🚴", roles: ["ngo", "admin"] },
+  { id: "History",    icon: "📋", roles: ["ngo", "donor", "admin"] },
+  { id: "Register",   icon: "🏢", roles: ["admin"] },
 ];
 
 export default function App() {
@@ -40,7 +42,7 @@ export default function App() {
 
   // Check if Flask backend is reachable when the app first loads
   useEffect(() => {
-    fetch("http://localhost:5001/api/stats")
+    fetch("http://localhost:8080/api/stats")
       .then(() => setOnline(true))
       .catch(() => setOnline(false));
   }, []);
@@ -80,14 +82,15 @@ export default function App() {
 
   return (
     // Provide global context to all child components
-    <AppContext.Provider value={{ showToast, triggerRefresh, refresh, user }}>
+    <AppContext.Provider value={{ showToast, triggerRefresh, refresh, user, setTab }}>
       <div className="app">
 
         {/* Top navigation header with logo, tabs, and user info */}
         <header className="header">
           <div className="logo">
-            <span className="logo-icon">🍛</span>
-            <span>SmartRedistribute</span>
+            <span className="logo-icon">🪔</span>
+            <span>KumbhAnna</span>
+            <span className="logo-sub">Kumbh Mela Food Network</span>
           </div>
           <nav>
             {/* Render only the tabs this user's role is allowed to see */}
@@ -129,16 +132,17 @@ export default function App() {
 
         {/* Main content area — renders the active tab's component */}
         <main className="main">
-          {tab === "Dashboard" && <Dashboard />}
-          {tab === "Alerts"    && <Alerts />}
-          {tab === "Donate"    && <Donate />}
-          {tab === "Map"       && <NGOMap />}
-          {tab === "History"   && <History />}
-          {tab === "Register"  && <RegisterNGO />}
+          {tab === "Dashboard"  && <Dashboard />}
+          {tab === "Alerts"     && <Alerts />}
+          {tab === "Donate"     && <Donate />}
+          {tab === "Map"        && <NGOMap />}
+          {tab === "Volunteer"  && <Volunteer />}
+          {tab === "History"    && <History />}
+          {tab === "Register"   && <RegisterNGO />}
         </main>
 
         <footer className="footer">
-          Built with ❤️ for Kumbhathon &nbsp;|&nbsp; Fighting hunger, one meal at a time 🍛
+          🪔 KumbhAnna — Built for Kumbhathon &nbsp;|&nbsp; Feeding every pilgrim at Kumbh Mela 2025 🍛
         </footer>
       </div>
     </AppContext.Provider>

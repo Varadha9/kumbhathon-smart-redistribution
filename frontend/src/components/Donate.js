@@ -77,9 +77,9 @@ export default function Donate() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 6 }}>🍛 Donate Food</h2>
+      <h2 style={{ marginBottom: 6 }}>🍛 Donate Food at Kumbh Mela</h2>
       <p style={{ color: "#718096", fontSize: "0.88rem", marginBottom: 20 }}>
-        Submit surplus food from your event, restaurant, or canteen. Our AI will instantly match it to the nearest NGO in need.
+        Submit surplus food from your langar, temple kitchen, or camp. Our Smart Matching Engine will instantly route it to the nearest pilgrim camp in need.
       </p>
 
       <div className="row">
@@ -96,7 +96,7 @@ export default function Donate() {
                     required
                     value={form.donor_name}
                     onChange={e => set("donor_name", e.target.value)}
-                    placeholder="e.g. Sharma Wedding, Hotel Taj, School Canteen"
+                    placeholder="e.g. Sharma Langar, Temple Kitchen, Camp 12"
                   />
                 </div>
 
@@ -188,10 +188,10 @@ export default function Donate() {
           <div className="card">
             <h3 style={{ marginBottom: 14, fontSize: "0.95rem" }}>💡 How it works</h3>
             {[
-              { step: "1", text: "Fill in your food details and location" },
-              { step: "2", text: "AI finds the nearest NGO with a food deficit" },
-              { step: "3", text: "NGO gets notified and confirms pickup" },
-              { step: "4", text: "Food reaches people in need within minutes" },
+              { step: "1", text: "Fill in your food details and Kumbh camp location" },
+              { step: "2", text: "Smart Matching Engine finds the nearest deficit pilgrim camp" },
+              { step: "3", text: "Camp gets notified and confirms pickup" },
+              { step: "4", text: "Food reaches pilgrims within minutes" },
             ].map(s => (
               <div key={s.step} style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "flex-start" }}>
                 <div style={{
