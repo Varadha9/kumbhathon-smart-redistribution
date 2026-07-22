@@ -1,8 +1,13 @@
 package com.kumbhanna.redistribution.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "users")
 public class User {
-    private String name;
+    @Id
     private String email;
+    private String name;
     private String password;
     private String role;
     private String contact;

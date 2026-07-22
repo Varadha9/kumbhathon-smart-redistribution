@@ -1,23 +1,16 @@
-// Auth.js
-// Login and signup screen — shown when no user is logged in.
-// Supports two roles: "donor" (submits food) and "ngo" (receives food).
-// NGO signup also collects location data for the AI matching engine.
-
 import React, { useState } from "react";
 import { api } from "../api";
 
 export default function Auth({ onLogin }) {
-  const [mode, setMode]           = useState("signin");  // "signin" or "signup"
-  const [role, setRole]           = useState("donor");   // "donor" or "ngo"
-  const [form, setForm]           = useState({});        // all form field values
-  const [error, setError]         = useState("");        // error message to show
-  const [loading, setLoading]     = useState(false);     // disable button while posting
-  const [gpsLoading, setGpsLoading] = useState(false);  // loading state for GPS button
+  const [mode, setMode]             = useState("signin");
+  const [role, setRole]             = useState("donor");
+  const [form, setForm]             = useState({});
+  const [error, setError]           = useState("");
+  const [loading, setLoading]       = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  // detectLocation — auto-fills lat/lng for NGO signup using browser GPS
-  // NGOs need coordinates so the AI can calculate distances to them
   function detectLocation() {
     if (!navigator.geolocation) { setError("GPS not supported by your browser"); return; }
     setGpsLoading(true);
@@ -39,18 +32,15 @@ export default function Auth({ onLogin }) {
     setError("");
     setLoading(true);
     try {
-      // Choose endpoint based on mode: signup creates account, signin checks credentials
       const endpoint = mode === "signup" ? "/auth/signup" : "/auth/signin";
-      // For signin, only send email + password. For signup, send everything including role.
       const body = mode === "signup" ? { ...form, role } : { email: form.email, password: form.password };
       const res = await api.post(endpoint, body);
 
-      if (!res) { setError("Cannot connect to backend. Make sure Flask server is running on port 5000."); return; }
+      if (!res) { setError("Cannot connect to backend. Make sure Spring Boot is running on port 8080."); return; }
       if (res.error) { setError(res.error); return; }
 
-      // Save user to localStorage so they stay logged in after page refresh
       localStorage.setItem("user", JSON.stringify(res.user));
-      onLogin(res.user);  // tell App.js the user is logged in
+      onLogin(res.user);
     } catch {
       setError("Server error. Is the backend running?");
     } finally {
@@ -61,23 +51,21 @@ export default function Auth({ onLogin }) {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">🪔 KumbhAnna</div>
-        <p className="auth-tagline">Smart Food Network for Kumbh Mela 2025</p>
+        <div className="auth-logo">🪔 Kumbh<span>Anna</span></div>
+        <p className="auth-tagline">Smart Food Redistribution · Kumbh Mela 2025</p>
 
-        {/* Toggle between Sign In and Sign Up */}
         <div className="auth-tabs">
           <button className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setError(""); }}>Sign In</button>
           <button className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setError(""); }}>Sign Up</button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Extra fields shown only during signup */}
           {mode === "signup" && (
             <>
-              {/* Role selector — determines what tabs the user sees after login */}
               <div className="role-selector">
                 <button type="button" className={role === "donor" ? "active" : ""} onClick={() => setRole("donor")}>🍽️ Donor</button>
                 <button type="button" className={role === "ngo"   ? "active" : ""} onClick={() => setRole("ngo")}>🏢 NGO</button>
+                <button type="button" className={role === "admin" ? "active" : ""} onClick={() => setRole("admin")}>🛡️ Admin</button>
               </div>
 
               <div className="field">
@@ -85,7 +73,6 @@ export default function Auth({ onLogin }) {
                 <input required onChange={e => set("name", e.target.value)} />
               </div>
 
-              {/* NGO-specific fields — location data needed for AI distance matching */}
               {role === "ngo" && (
                 <>
                   <div className="field">
@@ -103,15 +90,12 @@ export default function Auth({ onLogin }) {
                       <option>Zone E - Outer Camp</option>
                     </select>
                   </div>
-                  {/* GPS auto-detect button for NGO location */}
                   <button type="button" className="btn btn-secondary btn-sm gps-btn" onClick={detectLocation} disabled={gpsLoading}>
                     {gpsLoading ? "Detecting…" : "📍 Auto-detect My Location"}
                   </button>
-                  {/* Show detected coordinates as confirmation */}
                   {form.latitude && form.longitude && (
                     <div className="info-msg" style={{fontSize:"0.8rem"}}>📍 {form.latitude}, {form.longitude}</div>
                   )}
-                  {/* Manual lat/lng input as fallback */}
                   <div className="form-grid">
                     <div className="field">
                       <label>Latitude</label>
@@ -132,7 +116,6 @@ export default function Auth({ onLogin }) {
             </>
           )}
 
-          {/* Email and password — required for both signin and signup */}
           <div className="field">
             <label>Email</label>
             <input required type="email" onChange={e => set("email", e.target.value)} />
@@ -149,13 +132,18 @@ export default function Auth({ onLogin }) {
           </button>
         </form>
 
-        {/* Toggle link between signin and signup modes */}
         <p className="auth-switch">
           {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
           <span onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); }}>
             {mode === "signin" ? "Sign Up" : "Sign In"}
           </span>
         </p>
+
+        {/* Quick demo login hint for judges */}
+        <div style={{marginTop:16, padding:"10px 14px", background:"var(--accent-s)", borderRadius:"var(--r-sm)", border:"1px solid var(--accent-b)"}}>
+          <p style={{fontSize:"0.75rem", color:"var(--accent)", fontWeight:700, marginBottom:4}}>🎯 Demo Login</p>
+          <p style={{fontSize:"0.75rem", color:"var(--text-2)"}}>admin@kumbhanna.in / admin123</p>
+        </div>
       </div>
     </div>
   );

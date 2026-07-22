@@ -1,6 +1,11 @@
 package com.kumbhanna.redistribution.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "ngos")
 public class Ngo {
+    @Id
     private String ngoName;
     private String location;
     private String kumbhZone;

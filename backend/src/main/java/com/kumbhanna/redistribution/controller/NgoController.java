@@ -15,17 +15,23 @@ import java.util.*;
 @RequestMapping("/api")
 public class NgoController {
 
-    @Autowired private DataStore     store;
+    @Autowired private DataStore      store;
     @Autowired private MatchingService matcher;
 
-    // ── Register NGO ─────────────────────────────────────────────────────────
+    // ── Register NGO (admin only — enforced in SecurityConfig) ────────────────
 
     @PostMapping("/ngo/register")
     public ResponseEntity<?> registerNgo(@RequestBody Map<String, Object> body) {
         for (String f : List.of("ngo_name", "location", "latitude", "longitude", "contact"))
             if (!body.containsKey(f)) return ResponseEntity.badRequest().body(Map.of("error", "Missing fields"));
 
-        String name = (String) body.get("ngo_name");
+        String name = ((String) body.get("ngo_name")).trim();
+        if (name.isEmpty() || name.length() > 100)
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid NGO name"));
+
+        if (store.ngos.containsKey(name))
+            return ResponseEntity.status(409).body(Map.of("error", "NGO with this name already exists"));
+
         Ngo ngo = Ngo.builder()
             .ngoName(name)
             .location((String) body.get("location"))
@@ -45,11 +51,23 @@ public class NgoController {
     @PostMapping("/ngo/update")
     public ResponseEntity<?> updateNgo(@RequestBody Map<String, Object> body) {
         String name = (String) body.get("ngo_name");
+        if (name == null) return ResponseEntity.badRequest().body(Map.of("error", "ngo_name required"));
+
         Ngo ngo = store.ngos.get(name);
         if (ngo == null) return ResponseEntity.status(404).body(Map.of("error", "NGO not found"));
-        if (body.containsKey("food_available")) ngo.setFoodAvailable(Integer.parseInt(body.get("food_available").toString()));
-        if (body.containsKey("people_count"))   ngo.setPeopleCount(Integer.parseInt(body.get("people_count").toString()));
+
+        if (body.containsKey("food_available")) {
+            int val = Integer.parseInt(body.get("food_available").toString());
+            if (val < 0) return ResponseEntity.badRequest().body(Map.of("error", "food_available cannot be negative"));
+            ngo.setFoodAvailable(val);
+        }
+        if (body.containsKey("people_count")) {
+            int val = Integer.parseInt(body.get("people_count").toString());
+            if (val < 0) return ResponseEntity.badRequest().body(Map.of("error", "people_count cannot be negative"));
+            ngo.setPeopleCount(val);
+        }
         ngo.setTimestamp(LocalDateTime.now().toString());
+        store.ngoRepo.save(ngo);
         return ResponseEntity.ok(Map.of("message", "Updated", "ngo", ngo));
     }
 
@@ -102,7 +120,7 @@ public class NgoController {
         );
     }
 
-    // ── Demo Seed ─────────────────────────────────────────────────────────────
+    // ── Demo Seed (admin only — enforced in SecurityConfig) ───────────────────
 
     @PostMapping("/seed")
     public ResponseEntity<?> seed() {

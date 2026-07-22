@@ -1,9 +1,13 @@
 # Maven build output
 backend/target/
 
+# H2 database — contains real data, never commit
+backend/data/
+
 # Node
 frontend/node_modules/
 frontend/build/
+frontend/dist/
 
 # IDE
 .idea/
@@ -14,5 +18,9 @@ frontend/build/
 .DS_Store
 Thumbs.db
 
-# Env
+# Environment / secrets — NEVER commit these
 *.env
+.env
+.env.local
+.env.production
+backend/src/main/resources/application-prod.properties

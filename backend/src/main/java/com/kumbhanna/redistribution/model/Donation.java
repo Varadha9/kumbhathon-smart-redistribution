@@ -1,6 +1,11 @@
 package com.kumbhanna.redistribution.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "donations")
 public class Donation {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int    id;
     private String donorName;
     private int    foodQuantity;
