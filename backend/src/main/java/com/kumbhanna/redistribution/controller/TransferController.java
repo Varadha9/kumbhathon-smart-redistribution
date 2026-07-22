@@ -25,13 +25,20 @@ public class TransferController {
 
     @PostMapping("/transfer/confirm")
     public ResponseEntity<?> confirmTransfer(@RequestBody Map<String, Object> body) {
-        String from   = (String) body.get("from");
-        String to     = (String) body.get("to");
+        String from = (String) body.get("from");
+        String to   = (String) body.get("to");
+
+        if (from == null || to == null)
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing from/to fields"));
+
         int    meals  = Integer.parseInt(body.getOrDefault("meals_to_transfer", 0).toString());
         double distKm = Double.parseDouble(body.getOrDefault("distance_km", 0).toString());
 
+        if (meals <= 0)
+            return ResponseEntity.badRequest().body(Map.of("error", "meals_to_transfer must be > 0"));
+
+        // Let @GeneratedValue handle the ID — do NOT set it manually
         Transfer transfer = Transfer.builder()
-            .id(store.transfers.size() + 1)
             .from(from).to(to)
             .mealsToTransfer(meals)
             .distanceKm(distKm)
@@ -44,8 +51,14 @@ public class TransferController {
         // Update food counts
         Ngo fromNgo = store.ngos.get(from);
         Ngo toNgo   = store.ngos.get(to);
-        if (fromNgo != null) fromNgo.setFoodAvailable(Math.max(0, fromNgo.getFoodAvailable() - meals));
-        if (toNgo   != null) toNgo.setFoodAvailable(toNgo.getFoodAvailable() + meals);
+        if (fromNgo != null) {
+            fromNgo.setFoodAvailable(Math.max(0, fromNgo.getFoodAvailable() - meals));
+            store.ngoRepo.save(fromNgo);
+        }
+        if (toNgo != null) {
+            toNgo.setFoodAvailable(toNgo.getFoodAvailable() + meals);
+            store.ngoRepo.save(toNgo);
+        }
 
         // WhatsApp to both NGOs
         if (fromNgo != null) {
@@ -73,10 +86,17 @@ public class TransferController {
         for (String f : List.of("donor_name", "food_quantity", "food_type", "latitude", "longitude", "expiry_hours"))
             if (!body.containsKey(f)) return ResponseEntity.badRequest().body(Map.of("error", "Missing fields"));
 
+        String donorName = ((String) body.get("donor_name")).trim();
+        if (donorName.isEmpty() || donorName.length() > 100)
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid donor name"));
+
+        int qty = Integer.parseInt(body.get("food_quantity").toString());
+        if (qty <= 0) return ResponseEntity.badRequest().body(Map.of("error", "food_quantity must be > 0"));
+
+        // Let @GeneratedValue handle the ID
         Donation donation = Donation.builder()
-            .id(store.donations.size() + 1)
-            .donorName((String) body.get("donor_name"))
-            .foodQuantity(Integer.parseInt(body.get("food_quantity").toString()))
+            .donorName(donorName)
+            .foodQuantity(qty)
             .foodType((String) body.get("food_type"))
             .latitude(Double.parseDouble(body.get("latitude").toString()))
             .longitude(Double.parseDouble(body.get("longitude").toString()))

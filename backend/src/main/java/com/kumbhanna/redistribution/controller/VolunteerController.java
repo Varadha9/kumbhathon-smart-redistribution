@@ -23,14 +23,19 @@ public class VolunteerController {
         for (String f : List.of("volunteer_name", "volunteer_phone", "from_ngo", "to_ngo", "meals"))
             if (!body.containsKey(f)) return ResponseEntity.badRequest().body(Map.of("error", "Missing fields"));
 
-        String volName  = (String) body.get("volunteer_name");
-        String volPhone = (String) body.get("volunteer_phone");
+        String volName  = ((String) body.get("volunteer_name")).trim();
+        String volPhone = ((String) body.get("volunteer_phone")).trim();
         String fromNgo  = (String) body.get("from_ngo");
         String toNgo    = (String) body.get("to_ngo");
         int    meals    = Integer.parseInt(body.get("meals").toString());
 
+        if (volName.isEmpty() || volPhone.isEmpty())
+            return ResponseEntity.badRequest().body(Map.of("error", "Volunteer name and phone are required"));
+        if (meals <= 0)
+            return ResponseEntity.badRequest().body(Map.of("error", "meals must be > 0"));
+
+        // Let @GeneratedValue handle the ID
         VolunteerAssignment assignment = VolunteerAssignment.builder()
-            .id(store.volunteers.size() + 1)
             .volunteerName(volName).volunteerPhone(volPhone)
             .fromNgo(fromNgo).toNgo(toNgo).meals(meals)
             .status("dispatched")
@@ -69,12 +74,11 @@ public class VolunteerController {
     @PostMapping("/complete")
     public ResponseEntity<?> complete(@RequestBody Map<String, Object> body) {
         int id = Integer.parseInt(body.get("id").toString());
-        return store.volunteers.stream()
-            .filter(v -> v.getId() == id)
-            .findFirst()
+        return store.volunteerRepo.findById(id)
             .map(v -> {
                 v.setStatus("delivered");
                 v.setDeliveredAt(LocalDateTime.now().toString());
+                store.volunteerRepo.save(v);
                 return ResponseEntity.ok(Map.of("message", "Marked as delivered", "assignment", v));
             })
             .orElse(ResponseEntity.status(404).body(Map.of("error", "Assignment not found")));

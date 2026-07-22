@@ -1,9 +1,14 @@
 package com.kumbhanna.redistribution.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "transfers")
 public class Transfer {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int    id;
-    private String from;
-    private String to;
+    @Column(name = "from_ngo") private String from;
+    @Column(name = "to_ngo")   private String to;
     private int    mealsToTransfer;
     private double distanceKm;
     private String urgency;

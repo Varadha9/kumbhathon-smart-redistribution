@@ -8,28 +8,31 @@ import React, { useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { api } from "../api";
 import { useApp } from "../App";
 
-// Fix for Leaflet's default marker icons not loading in React (known Leaflet + webpack issue)
+// Fix for Leaflet's default marker icons not loading in Vite (ESM)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  iconUrl:       require("leaflet/dist/images/marker-icon.png"),
-  shadowUrl:     require("leaflet/dist/images/marker-shadow.png"),
+  iconRetinaUrl: markerIcon2x,
+  iconUrl:       markerIcon,
+  shadowUrl:     markerShadow,
 });
 
 // Custom green marker icon — used for surplus NGOs
 const surplusIcon = new L.Icon({
   iconUrl:   "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+  shadowUrl: markerShadow,
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
 });
 
 // Custom red marker icon — used for deficit NGOs
 const deficitIcon = new L.Icon({
   iconUrl:   "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+  shadowUrl: markerShadow,
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
 });
 

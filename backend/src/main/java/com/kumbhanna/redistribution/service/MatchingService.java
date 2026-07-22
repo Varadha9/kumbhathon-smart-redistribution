@@ -41,46 +41,53 @@ public class MatchingService {
 
     /**
      * Main matching function.
-     * 1. Split NGOs into surplus and deficit
-     * 2. Apply time-based demand multiplier to deficit estimates
-     * 3. Prefer same-zone matches for faster logistics
-     * 4. Fall back to nearest cross-zone match
-     * 5. Assign urgency: CRITICAL > 300, HIGH > 100, else MEDIUM
-     * 6. Return sorted by distance ascending
+     * Pass 1: Find nearest same-zone surplus NGO (preferred — faster logistics).
+     * Pass 2: Find nearest cross-zone surplus NGO (independent search, not constrained by Pass 1 distance).
+     * Final: Pick whichever is closer — same-zone wins on tie.
      */
     public List<Alert> computeAlerts(Collection<Ngo> ngos) {
         Object[] demand       = predictDemand();
         double   multiplier   = (double) demand[0];
         String   demandReason = (String) demand[1];
 
-        List<Ngo> surplus = ngos.stream().filter(n -> n.getFoodAvailable() > n.getPeopleCount()).collect(Collectors.toList());
-        List<Ngo> deficit = ngos.stream().filter(n -> n.getFoodAvailable() < n.getPeopleCount()).collect(Collectors.toList());
+        List<Ngo> surplus = ngos.stream()
+            .filter(n -> n.getFoodAvailable() > n.getPeopleCount())
+            .collect(Collectors.toList());
+        List<Ngo> deficit = ngos.stream()
+            .filter(n -> n.getFoodAvailable() < n.getPeopleCount())
+            .collect(Collectors.toList());
 
         List<Alert> alerts = new ArrayList<>();
 
         for (Ngo d : deficit) {
             int effectiveNeed = (int) ((d.getPeopleCount() - d.getFoodAvailable()) * multiplier);
 
-            Ngo    best         = null;
-            double bestDist     = Double.MAX_VALUE;
-            boolean sameZone   = false;
-
-            // Pass 1: same-zone match
+            // Pass 1: nearest same-zone surplus
+            Ngo    sameZoneBest  = null;
+            double sameZoneDist  = Double.MAX_VALUE;
             for (Ngo s : surplus) {
                 boolean isZoneMatch = !d.getKumbhZone().isEmpty()
                         && d.getKumbhZone().equals(s.getKumbhZone());
                 if (!isZoneMatch) continue;
                 double dist = haversine(d.getLatitude(), d.getLongitude(), s.getLatitude(), s.getLongitude());
-                if (dist < bestDist) { bestDist = dist; best = s; sameZone = true; }
+                if (dist < sameZoneDist) { sameZoneDist = dist; sameZoneBest = s; }
             }
 
-            // Pass 2: nearest regardless of zone
-            if (best == null) {
-                for (Ngo s : surplus) {
-                    double dist = haversine(d.getLatitude(), d.getLongitude(), s.getLatitude(), s.getLongitude());
-                    if (dist < bestDist) { bestDist = dist; best = s; }
-                }
+            // Pass 2: nearest cross-zone surplus (independent search — not bounded by Pass 1)
+            Ngo    crossZoneBest = null;
+            double crossZoneDist = Double.MAX_VALUE;
+            for (Ngo s : surplus) {
+                boolean isZoneMatch = !d.getKumbhZone().isEmpty()
+                        && d.getKumbhZone().equals(s.getKumbhZone());
+                if (isZoneMatch) continue; // already handled in Pass 1
+                double dist = haversine(d.getLatitude(), d.getLongitude(), s.getLatitude(), s.getLongitude());
+                if (dist < crossZoneDist) { crossZoneDist = dist; crossZoneBest = s; }
             }
+
+            // Pick best: same-zone preferred; cross-zone only if no same-zone match exists
+            Ngo    best     = sameZoneBest != null ? sameZoneBest : crossZoneBest;
+            double bestDist = sameZoneBest != null ? sameZoneDist : crossZoneDist;
+            boolean sameZone = sameZoneBest != null;
 
             if (best == null) continue;
 

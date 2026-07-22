@@ -56,7 +56,8 @@ public class AuthController {
         store.users.put(email, user);
         return ResponseEntity.status(201).body(Map.of(
             "message", "Signup successful",
-            "user", Map.of("name", user.getName(), "email", user.getEmail(), "role", user.getRole(), "contact", user.getContact())
+            "user", Map.of("name", user.getName(), "email", user.getEmail(),
+                           "role", user.getRole(), "contact", user.getContact())
         ));
     }
 
@@ -69,7 +70,8 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));
         return ResponseEntity.ok(Map.of(
             "message", "Login successful",
-            "user", Map.of("name", user.getName(), "email", user.getEmail(), "role", user.getRole(), "contact", user.getContact())
+            "user", Map.of("name", user.getName(), "email", user.getEmail(),
+                           "role", user.getRole(), "contact", user.getContact())
         ));
     }
 }

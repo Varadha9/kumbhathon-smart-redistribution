@@ -57,9 +57,9 @@ export default function Dashboard() {
       {/* Kumbh Live Impact Banner */}
       {impact && impact.meals_saved_at_kumbh > 0 && (
         <div className="kumbh-impact-banner">
-          <span>🪔 <strong>Live Kumbh Impact</strong></span>
+          <span className="banner-title">🪔 Live Impact</span>
           <span>🍛 <strong>{impact.meals_saved_at_kumbh}</strong> meals saved</span>
-          <span>🌿 <strong>{impact.co2_saved_kg} kg</strong> CO₂ prevented</span>
+          <span>🌿 <strong>{impact.co2_saved_kg} kg</strong> CO₂ saved</span>
           <span>💧 <strong>{impact.water_saved_litres}L</strong> water saved</span>
           <span>🗺️ <strong>{impact.zones_covered}</strong> zones active</span>
           <span>🙏 <strong>{impact.pilgrims_served}</strong> pilgrims served</span>
@@ -69,15 +69,16 @@ export default function Dashboard() {
       {stats && (
         <div className="stats-grid">
           {[
-            { value: stats.total_ngos,           label: "Camps Connected",     color: "#1b4332" },
-            { value: stats.total_food_available,  label: "Food Available",      color: "#276749" },
-            { value: stats.total_people_to_feed,  label: "Pilgrims to Feed",    color: "#c05621" },
-            { value: stats.meals_redistributed,   label: "Meals Redistributed", color: "#2b6cb0" },
-            { value: stats.active_donations,      label: "Active Donations",    color: "#6b46c1" },
-            { value: stats.completed_transfers,   label: "Transfers Done",      color: "#40916c" },
+            { icon: "🏛️", value: stats.total_ngos,           label: "Camps Connected"     },
+            { icon: "🍛", value: stats.total_food_available,  label: "Food Available"      },
+            { icon: "🙏", value: stats.total_people_to_feed,  label: "Pilgrims to Feed"    },
+            { icon: "✅", value: stats.meals_redistributed,   label: "Meals Redistributed" },
+            { icon: "🤝", value: stats.active_donations,      label: "Active Donations"    },
+            { icon: "🚚", value: stats.completed_transfers,   label: "Transfers Done"      },
           ].map(s => (
             <div className="stat-card" key={s.label}>
-              <div className="value" style={{ color: s.color }}>{s.value}</div>
+              <span className="stat-icon">{s.icon}</span>
+              <div className="value">{s.value}</div>
               <div className="label">{s.label}</div>
             </div>
           ))}

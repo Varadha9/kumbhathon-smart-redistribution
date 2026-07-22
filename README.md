@@ -115,20 +115,22 @@ Step 13: History tab → Full log of all transfers, donations, and impact summar
 ### Backend
 | Technology | Purpose |
 |-----------|---------|
-| Java 17 | Core language |
+| Java 17+ | Core language |
 | Spring Boot 3.3 | REST API framework |
 | Spring Security | BCrypt password hashing, CORS config |
+| Spring Data JPA | ORM layer for H2 persistence |
+| H2 Database | File-based embedded DB — survives restarts |
 | Twilio SDK 10.x | WhatsApp notifications to NGOs and volunteers |
 | Maven | Build and dependency management |
-| In-Memory Store | ConcurrentHashMap — fast, thread-safe demo storage |
 
 ### Frontend
 | Technology | Purpose |
 |-----------|---------|
-| React 18 | UI framework |
+| React 19 + Vite | UI framework + lightning-fast dev server |
 | Recharts | Bar charts and data visualization |
 | Leaflet + React-Leaflet | Interactive map with camp markers |
 | OpenStreetMap | Free map tiles — no API key needed |
+| Inter (Google Fonts) | Clean modern typography |
 | CSS3 | Custom styling, responsive layout, saffron Kumbh theme |
 
 ### Integrations
@@ -428,7 +430,7 @@ curl -X POST http://localhost:8080/api/auth/signup \
 ### Prerequisites
 - Java 17+
 - Maven 3.6+
-- Node.js 16+
+- Node.js 18+
 - npm
 
 ### Option 1: One-Click (Linux/Mac)
@@ -445,21 +447,19 @@ cd backend
 mvn spring-boot:run
 ```
 Backend runs at → `http://localhost:8080`
+H2 Console at → `http://localhost:8080/h2-console`
 
 **Frontend** (separate terminal)
 ```bash
 cd frontend
 npm install
-npm start
+npm run start
 ```
 Frontend runs at → `http://localhost:3000`
 
-### Option 3: Run JAR directly
-```bash
-cd backend
-mvn package -DskipTests
-java -jar target/redistribution-1.0.0.jar
-```
+### Default Admin Login
+- Email: `admin@kumbhanna.in`
+- Password: `admin123`
 
 ---
 
@@ -501,7 +501,7 @@ KumbhAnna tracks real environmental and social impact at `/api/impact`:
 
 | Challenge | Current State | Future Fix |
 |-----------|--------------|------------|
-| In-Memory Storage | Data resets on server restart | JPA + PostgreSQL / Firebase |
+| In-Memory Storage | H2 file DB — persists across restarts | PostgreSQL for production |
 | Internet Dependency | Requires connectivity | Offline-first PWA / SMS fallback |
 | Food Quality | No verification of food safety | Photo upload + quality checklist |
 | IoT Integration | Manual food count updates | Smart containers with weight sensors |
